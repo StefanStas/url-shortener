@@ -5,6 +5,7 @@ import (
     "url-shortener/api"
     "url-shortener/app"
     "url-shortener/interfaces"
+    "url-shortener/storage/mongo"
 )
 
 type ServerCommand struct {
@@ -23,14 +24,17 @@ type DatabaseGroup struct {
 func (s *ServerCommand) Execute(args []string) error {
     logrus.Info("Running server command")
 
-    app := s.initApp()
+    app, err := s.initApp()
+    if err != nil {
+        return err
+    }
 
     app.Run()
 
     return nil
 }
 
-func (s *ServerCommand) initApp() interfaces.App {
+func (s *ServerCommand) initApp() (interfaces.App, error) {
     serverApp := app.NewApp(&interfaces.Config{
         Host: s.Host,
         Port: s.Port,
@@ -38,11 +42,20 @@ func (s *ServerCommand) initApp() interfaces.App {
         DbHost: s.Db.Host,
         DBPort: s.Db.Port,
     })
+    store, err := mongo.InitMongoStore(&mongo.Config{
+        Host: s.Db.Host,
+        Port: s.Db.Port,
+        DbName: s.Db.Name,
+    })
+    if err != nil {
+        return nil, err
+    }
+    serverApp.SetStore(store)
 
     apiApp := api.NewApi(serverApp)
     apiApp.InitApi()
 
     serverApp.SetApi(apiApp)
 
-    return serverApp
+    return serverApp, nil
 }
