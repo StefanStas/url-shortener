@@ -24,6 +24,11 @@ func (a *Api) InitApi() {
 
 func (a *Api) createRoutes() {
     a.router.GET("/ping", a.PingCtrl)
+    api := a.router.Group("/api")
+    {
+        api.GET("/urls/:hash", a.RedirectUrlCtrl)
+        api.POST("/urls", a.SaveUrlValidator, a.SaveUrlCtrl)
+    }
 }
 
 func (a *Api) Run() error {
