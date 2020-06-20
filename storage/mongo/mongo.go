@@ -53,12 +53,12 @@ func (m *Mongo) Connect() error {
     client, err := mongo.Connect(ctx, options.Client().
         ApplyURI(fmt.Sprintf("mongodb://%s:%d", m.config.Host, m.config.Port)))
     if err != nil {
-        return err
+        return fmt.Errorf("storage.mongo.mongo.Mongo.Connect error: %w", err)
     }
 
     err = client.Ping(ctx, readpref.Primary())
     if err != nil {
-        return err
+        return fmt.Errorf("storage.mongo.mongo.Mongo.Connect error: %w", err)
     }
 
     m.client = client

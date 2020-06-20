@@ -1,6 +1,7 @@
 package api
 
 import (
+    "errors"
     "github.com/gin-gonic/gin"
     "github.com/sirupsen/logrus"
     "net/http"
@@ -41,9 +42,7 @@ func (a *Api) SaveUrlCtrl(c *gin.Context) {
     data, ok := c.Get("data")
     if !ok {
         logrus.Error("Accessed not existing save url params")
-        c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H {
-            "error": "Internal error",
-        })
+        errorResponseJson(c, errors.New("accessed not existing save url params"))
 
         return
     }
@@ -53,9 +52,8 @@ func (a *Api) SaveUrlCtrl(c *gin.Context) {
     url := &models.Url{Url: urlData.Url}
     url, err := a.app.SaveUrl(url)
     if err != nil {
-        c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H {
-            "error": err.Error(),
-        })
+        logrus.Errorf("api.Api.SaveUrlCtrl error: %+v", err)
+        errorResponseJson(c, err)
         return
     }
 
@@ -69,16 +67,8 @@ func (a *Api) RedirectUrlCtrl(c *gin.Context) {
 
     url, err := a.app.FindUrl(hash)
     if err != nil {
-        c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H {
-            "error": err.Error(),
-        })
-        return
-    }
-
-    if url == nil {
-        c.AbortWithStatusJSON(http.StatusNotFound, gin.H {
-            "error": "Url not found",
-        })
+        logrus.Errorf("api.Api.RedirectUrlCtrl error: %+v", err)
+        errorResponseJson(c, err)
         return
     }
 
